@@ -139,11 +139,11 @@ function main() {
     var sphereVAO = twgl.createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo);
 
     function degToRad(d) {
-    return d * Math.PI / 180;
+        return d * Math.PI / 180;
     }
 
     function rand(min, max) {
-    return Math.random() * (max - min) + min;
+        return Math.random() * (max - min) + min;
     }
 
     function emod(x, n) {
@@ -152,7 +152,7 @@ function main() {
 
 
     var cameraAngleRadians = degToRad(0);
-    var fieldOfViewRadians = degToRad(60);
+    var fieldOfViewRadians = degToRad(45);
     var cameraHeight = 50;
 
     var objectsToDraw = [];
@@ -165,44 +165,44 @@ function main() {
         draw: false,
         children: [
             {
-            name: "sun",
-            scale: [5, 5, 5],
-            uniforms: {
-                u_colorOffset: [0.6, 0.6, 0, 1], // yellow
-                u_colorMult:   [0.4, 0.4, 0, 1],
-            },
+                name: "sun",
+                scale: [70, 70, 70],
+                uniforms: {
+                    u_colorOffset: [0.6, 0.6, 0, 1], // yellow
+                    u_colorMult:   [0.4, 0.4, 0, 1],
+                },
             },
             {
-            name: "earthOrbit",
-            draw: false,
-            nodeType: RTS,
-            translation: [100, 0, 0],
-            children: [
-                {
-                name: "earth",
-                scale: [2, 2, 2],
-                uniforms: {
-                    u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
-                    u_colorMult:   [0.8, 0.5, 0.2, 1],
-                },
-                },
-                {
-                name: "moonOrbit",
+                name: "earthOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [30, 0, 0],
+                translation: [9976, 0, 0],
                 children: [
                     {
-                    name: "moon",
-                    scale: [0.4, 0.4, 0.4],
-                    uniforms: {
-                        u_colorOffset: [0.6, 0.6, 0.6, 1],  // gray
-                        u_colorMult:   [0.1, 0.1, 0.1, 1],
+                        name: "earth",
+                        scale: [5.2, 5.2, 5.2],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
                     },
+                    {
+                        name: "moonOrbit",
+                        draw: false,
+                        nodeType: RTS,
+                        translation: [156, 0, 0],
+                        children: [
+                            {
+                                name: "moon",
+                                scale: [1.4, 1.4, 1.4],
+                                uniforms: {
+                                    u_colorOffset: [0.6, 0.6, 0.6, 1],  // gray
+                                    u_colorMult:   [0.1, 0.1, 0.1, 1],
+                                },
+                            },
+                        ],
                     },
                 ],
-                },
-            ],
 
             },
         ],
@@ -260,10 +260,10 @@ function main() {
 
         // Compute the projection matrix
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
+        var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 300000);
 
         // Compute the camera's matrix using look at.
-        var cameraPosition = [0, 0, -200];
+        var cameraPosition = [0, 4000, -20000];
         var target = [0, 0, 0];
         var up = [0, 1, 0];
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
@@ -273,7 +273,8 @@ function main() {
 
         var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
 
-        nodeInfosByName["earthOrbit"].source.rotation[1] += 0.01;
+        
+        nodeInfosByName["earthOrbit"].source.rotation[1] += 0.001;
         nodeInfosByName["moonOrbit"].source.rotation[1] += 0.01;
         nodeInfosByName["earth"].source.rotation[1] += 0.05;
         nodeInfosByName["moon"].source.rotation[1] += -.01;
