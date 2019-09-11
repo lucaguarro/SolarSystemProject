@@ -173,6 +173,38 @@ function main() {
                 },
             },
             {
+                name: "mercuryOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [3948, 0, 0],
+                children: [
+                    {
+                        name: "mercury",
+                        scale: [2, 2, 2],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
+            {
+                name: "venusOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [7208, 0, 0],
+                children: [
+                    {
+                        name: "venus",
+                        scale: [5, 5, 5],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
+            {
                 name: "earthOrbit",
                 draw: false,
                 nodeType: RTS,
