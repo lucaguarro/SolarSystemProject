@@ -3,18 +3,18 @@
 var vs = `#version 300 es
 
 in vec4 a_position;
-in vec4 a_color;
+in vec2 a_texcoord;
 
 uniform mat4 u_matrix;
 
-out vec4 v_color;
+out vec2 v_texcoord;
 
 void main() {
   // Multiply the position by the matrix.
   gl_Position = u_matrix * a_position;
 
-  // Pass the color to the fragment shader.
-  v_color = a_color;
+  // Pass the texcoord to the fragment shader.
+  v_texcoord = a_texcoord;
 }
 `;
 
@@ -22,15 +22,14 @@ var fs = `#version 300 es
 precision mediump float;
 
 // Passed in from the vertex shader.
-in vec4 v_color;
+in vec2 v_texcoord;
 
-uniform vec4 u_colorMult;
-uniform vec4 u_colorOffset;
+uniform sampler2D u_texture;
 
 out vec4 outColor;
 
 void main() {
-   outColor = v_color * u_colorMult + u_colorOffset;
+   outColor = texture(u_texture, v_texcoord);
 }
 `;
 
@@ -125,6 +124,33 @@ function main() {
     if (!gl) {
         return;
     }
+    function loadImageTexture(url) {
+        // Create a texture.
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        // Fill the texture with a 1x1 blue pixel.
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                      new Uint8Array([0, 0, 255, 255]));
+        // Asynchronously load an image
+        const image = new Image();
+        image.src = url;
+        image.addEventListener('load', function() {
+          // Now that the image has loaded make copy it to the texture.
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+          // assumes this texture is a power of 2
+          gl.generateMipmap(gl.TEXTURE_2D);
+          console.log("yo");
+          //render();
+        });
+        return texture;
+      }
+       
+
+    loadImageTexture('Resources/2k_sun.jpg');
+    // const textureSun = twgl.createTexture(gl, {
+    //     sun: { src: "Resources/2k_sun.jpg", mag: gl.NEAREST }
+    // });
 
     setupControls(canvas);
 
@@ -150,9 +176,11 @@ function main() {
             {
                 name: "sun",
                 scale: [70, 70, 70],
+                surface: "Resources/2k_sun.jpg",
                 uniforms: {
                     u_colorOffset: [0.6, 0.6, 0, 1], // yellow
                     u_colorMult:   [0.4, 0.4, 0, 1],
+                    //u_texture: textures.sun,
                 },
             },
             {
@@ -353,7 +381,6 @@ function main() {
 
     requestAnimationFrame(drawScene);
 
-
     // Compute the camera's matrix using look at.
     var cameraPosition = [0, 4000, -20000];
     var target = [0, 0, 0];
@@ -378,7 +405,6 @@ function main() {
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         var projectionMatrix = m4.perspective(fov, aspect, 1, 300000);
 
-
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
 
         // Make a view matrix from the camera matrix.
@@ -401,6 +427,7 @@ function main() {
         // Update all world matrices in the scene graph
         scene.updateWorldMatrix();
         // Compute all the matrices for rendering
+        // We update u_matrix for each object so the vertex shader can draw it
         objects.forEach(function(object) {
             object.drawInfo.uniforms.u_matrix = m4.multiply(viewProjectionMatrix, object.worldMatrix);
         });
@@ -410,9 +437,6 @@ function main() {
 
         requestAnimationFrame(drawScene);
     }
-
-
-
 }
 
 window.onload = main;

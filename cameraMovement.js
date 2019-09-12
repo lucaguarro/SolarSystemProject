@@ -1,4 +1,7 @@
 // Camera control parameters
+
+// https://sites.google.com/site/csc8820/educational/move-a-camera
+
 var pitchAngle = 0;
 var minPitchAngle = -90;
 var maxPitchAngle = 90;
