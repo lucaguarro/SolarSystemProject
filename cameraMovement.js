@@ -27,7 +27,11 @@ var fov = degToRad(45);
 var fovMin = 10;
 var fovMax = 160;
 
-var zoomIntensity = 0.2;
+var cameraPosition = [0, 4000, -20000];
+var target = [0, 0, 0];
+var up = [0, 1, 0];
+
+var zoomIntensity = 100;
 
 var lastX = 0, lastY = 0;
 var dMouseX = 0, dMouseY = 0;
@@ -149,17 +153,17 @@ function initMouseMotionCallback(canvas) {
 function initWheelCallback(canvas) {
     canvas.onwheel = function (event){
         event.preventDefault();
-        console.log(event.deltaY);
         // var mousex = event.clientX - canvas.offsetLeft;
         // var mousey = event.clientY - canvas.offsetTop;
         var wheel = event.deltaY < 0 ? 1 : -1;
-        // var zoom = Math.exp(wheel*zoomIntensity);
-        fov -= wheel * fovStep;
-        if (wheel){
-            fov = Math.min(fov, fovMin);
-        }
-        else{
-            fov = Math.min(fov, fovMax);
-        }
+        //var zoom = Math.exp(Math.abs(event.deltaY));
+        cameraPosition[2] += wheel*zoomIntensity;
+        // fov -= wheel * fovStep;
+        // if (wheel){
+        //     fov = Math.min(fov, fovMin);
+        // }
+        // else{
+        //     fov = Math.min(fov, fovMax);
+        // }
     }
 }

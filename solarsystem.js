@@ -124,35 +124,20 @@ function main() {
     if (!gl) {
         return;
     }
-    function loadImageTexture(url) {
-        // Create a texture.
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        // Fill the texture with a 1x1 blue pixel.
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-                      new Uint8Array([0, 0, 255, 255]));
-        // Asynchronously load an image
-        const image = new Image();
-        image.src = url;
-        image.addEventListener('load', function() {
-          // Now that the image has loaded make copy it to the texture.
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-          // assumes this texture is a power of 2
-          gl.generateMipmap(gl.TEXTURE_2D);
-          console.log("yo");
-          //render();
-        });
-        return texture;
-      }
-       
 
-    loadImageTexture('Resources/2k_sun.jpg');
-    // const textureSun = twgl.createTexture(gl, {
-    //     sun: { src: "Resources/2k_sun.jpg", mag: gl.NEAREST }
-    // });asdf
-
-    setupControls(canvas);
+    const textures = twgl.createTextures(gl, {
+        sun: {src: "Resources/2k_sun.jpg"},
+        mercury: {src: "Resources/2k_mercury.jpg"},
+        venus: {src: "Resources/2k_venus_surface.jpg"},
+        earth: {src: "Resources/2k_earth_daymap.jpg"},
+        mars: {src: "Resources/2k_mars.jpg"},
+        jupiter: {src: "Resources/2k_jupiter.jpg"},
+        saturn: {src: "Resources/2k_saturn.jpg"},
+        uranus: {src: "Resources/2k_uranus.jpg"},
+        neptune: {src: "Resources/2k_neptune.jpg"},
+    }, function (err, textures, sources){
+        console.log(err);
+    });
 
     // Tell the twgl to match position with a_position, n
     // normal with a_normal etc..
@@ -167,7 +152,7 @@ function main() {
     var objectsToDraw = [];
     var objects = [];
     var nodeInfosByName = {};
-
+    //var textures = {}
     var solarSystemNode =
         {
         name: "solar system",
@@ -180,7 +165,7 @@ function main() {
                 uniforms: {
                     u_colorOffset: [0.6, 0.6, 0, 1], // yellow
                     u_colorMult:   [0.4, 0.4, 0, 1],
-                    //u_texture: textures.sun,
+                    u_texture: textures.sun,
                 },
             },
             {
@@ -195,6 +180,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_texture: textures.mercury,
                         },
                     }
                 ]
@@ -211,6 +197,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_texture: textures.venus,
                         },
                     }
                 ]
@@ -227,6 +214,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_texture: textures.earth,
                         },
                     },
                     {
@@ -241,6 +229,7 @@ function main() {
                                 uniforms: {
                                     u_colorOffset: [0.6, 0.6, 0.6, 1],  // gray
                                     u_colorMult:   [0.1, 0.1, 0.1, 1],
+                                    u_textures: textures.mercury,
                                 },
                             },
                         ],
@@ -260,6 +249,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_textures: textures.mars,
                         },
                     }
                 ]
@@ -276,6 +266,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_textures: textures.jupiter,
                         },
                     }
                 ]
@@ -292,6 +283,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_textures: textures.saturn,
                         },
                     }
                 ]
@@ -308,6 +300,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_textures: textures.uranus,
                         },
                     }
                 ]
@@ -324,6 +317,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_textures: textures.neptune,
                         },
                     }
                 ]
@@ -340,6 +334,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_textures: textures.neptune,
                         },
                     }
                 ]
@@ -351,8 +346,8 @@ function main() {
         var source = new (nodeDescription.nodeType || TRS);
         var node = new Node(source);
         nodeInfosByName[nodeDescription.name] = {
-        source: source,
-        node: node,
+            source: source,
+            node: node,
         };
         source.translation = nodeDescription.translation || source.translation;
         source.scale = nodeDescription.scale || source.scale;
@@ -382,9 +377,9 @@ function main() {
     requestAnimationFrame(drawScene);
 
     // Compute the camera's matrix using look at.
-    var cameraPosition = [0, 4000, -20000];
-    var target = [0, 0, 0];
-    var up = [0, 1, 0];
+
+
+    setupControls(canvas);
     // Draw the scene.
     function drawScene(time) {
         time *= 0.0005;
@@ -440,3 +435,25 @@ function main() {
 }
 
 main();
+
+// function loadImageTexture(url) {
+//     // Create a texture.
+//     const texture = gl.createTexture();
+//     gl.bindTexture(gl.TEXTURE_2D, texture);
+//     // Fill the texture with a 1x1 blue pixel.
+//     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+//                   new Uint8Array([0, 0, 255, 255]));
+//     // Asynchronously load an image
+//     const image = new Image();
+//     image.src = url;
+//     image.addEventListener('load', function() {
+//       // Now that the image has loaded make copy it to the texture.
+//       gl.bindTexture(gl.TEXTURE_2D, texture);
+//       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+//       // assumes this texture is a power of 2
+//       gl.generateMipmap(gl.TEXTURE_2D);
+//       console.log("yo");
+//       //render();
+//     });
+//     return texture;
+//   }
