@@ -118,6 +118,7 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
 };
 
 
+var zoomIntensity = 0.2;
 function main() {
     // Get A WebGL context
     /** @type {HTMLCanvasElement} */
@@ -126,6 +127,7 @@ function main() {
     if (!gl) {
         return;
     }
+
 
     // Tell the twgl to match position with a_position, n
     // normal with a_normal etc..
@@ -274,6 +276,11 @@ function main() {
 
     requestAnimationFrame(drawScene);
 
+
+    // Compute the camera's matrix using look at.
+    var cameraPosition = [0, 4000, -20000];
+    var target = [0, 0, 0];
+    var up = [0, 1, 0];
     // Draw the scene.
     function drawScene(time) {
         time *= 0.0005;
@@ -294,10 +301,7 @@ function main() {
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 300000);
 
-        // Compute the camera's matrix using look at.
-        var cameraPosition = [0, 4000, -20000];
-        var target = [0, 0, 0];
-        var up = [0, 1, 0];
+
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
 
         // Make a view matrix from the camera matrix.
@@ -323,6 +327,17 @@ function main() {
 
         requestAnimationFrame(drawScene);
     }
+
+    canvas.onwheel = function (event){
+        event.preventDefault();
+        console.log(event.deltaY);
+        // var mousex = event.clientX - canvas.offsetLeft;
+        // var mousey = event.clientY - canvas.offsetTop;
+        var wheel = event.deltaY < 0 ? 1 : -1;
+        // var zoom = Math.exp(wheel*zoomIntensity);
+        cameraPosition[2] += wheel*500;
+    }
+
 }
 
 window.onload = main;
