@@ -150,7 +150,7 @@ function main() {
     loadImageTexture('Resources/2k_sun.jpg');
     // const textureSun = twgl.createTexture(gl, {
     //     sun: { src: "Resources/2k_sun.jpg", mag: gl.NEAREST }
-    // });
+    // });asdf
 
     setupControls(canvas);
 
