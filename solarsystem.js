@@ -117,8 +117,6 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
     });
 };
 
-
-var zoomIntensity = 0.2;
 function main() {
     // Get A WebGL context
     /** @type {HTMLCanvasElement} */
@@ -128,34 +126,17 @@ function main() {
         return;
     }
 
+    setupControls(canvas);
 
     // Tell the twgl to match position with a_position, n
     // normal with a_normal etc..
     twgl.setAttributePrefix("a_");
 
     var sphereBufferInfo = flattenedPrimitives.createSphereBufferInfo(gl, 10, 12, 6);
-
     // setup GLSL program
     var programInfo = twgl.createProgramInfo(gl, [vs, fs]);
 
     var sphereVAO = twgl.createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo);
-
-    function degToRad(d) {
-        return d * Math.PI / 180;
-    }
-
-    function rand(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
-    function emod(x, n) {
-    return x >= 0 ? (x % n) : ((n - (-x % n)) % n);
-    }
-
-
-    var cameraAngleRadians = degToRad(0);
-    var fieldOfViewRadians = degToRad(45);
-    var cameraHeight = 50;
 
     var objectsToDraw = [];
     var objects = [];
@@ -299,7 +280,7 @@ function main() {
 
         // Compute the projection matrix
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 300000);
+        var projectionMatrix = m4.perspective(fov, aspect, 1, 300000);
 
 
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
@@ -309,6 +290,12 @@ function main() {
 
         var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
 
+        m4.translate(viewProjectionMatrix, -trackLeftRight, 0, 0, viewProjectionMatrix);
+        m4.translate(viewProjectionMatrix, 0, -craneUpDown, 0, viewProjectionMatrix);
+        m4.translate(viewProjectionMatrix, 0, 0, pushInPullOut, viewProjectionMatrix);
+        m4.xRotate(viewProjectionMatrix, pitchAngle, viewProjectionMatrix);
+        m4.yRotate(viewProjectionMatrix, yawAngle, viewProjectionMatrix);
+        m4.zRotate(viewProjectionMatrix, rollAngle, viewProjectionMatrix);
         
         nodeInfosByName["earthOrbit"].source.rotation[1] += 0.001;
         nodeInfosByName["moonOrbit"].source.rotation[1] += 0.01;
@@ -328,15 +315,7 @@ function main() {
         requestAnimationFrame(drawScene);
     }
 
-    canvas.onwheel = function (event){
-        event.preventDefault();
-        console.log(event.deltaY);
-        // var mousex = event.clientX - canvas.offsetLeft;
-        // var mousey = event.clientY - canvas.offsetTop;
-        var wheel = event.deltaY < 0 ? 1 : -1;
-        // var zoom = Math.exp(wheel*zoomIntensity);
-        cameraPosition[2] += wheel*500;
-    }
+
 
 }
 
