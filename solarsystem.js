@@ -220,6 +220,102 @@ function main() {
                 ],
 
             },
+            {
+                name: "marsOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [15125, 0, 0],
+                children: [
+                    {
+                        name: "mars",
+                        scale: [5, 5, 5],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
+            {
+                name: "jupiterOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [51874, 0, 0],
+                children: [
+                    {
+                        name: "jupiter",
+                        scale: [5, 5, 5],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
+            {
+                name: "saturnOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [95091, 0, 0],
+                children: [
+                    {
+                        name: "saturn",
+                        scale: [5, 5, 5],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
+            {
+                name: "uranusOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [191332, 0, 0],
+                children: [
+                    {
+                        name: "uranus",
+                        scale: [5, 5, 5],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
+            {
+                name: "neptuneOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [299832, 0, 0],
+                children: [
+                    {
+                        name: "neptune",
+                        scale: [5, 5, 5],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
+            {
+                name: "plutoOrbit",
+                draw: false,
+                nodeType: RTS,
+                translation: [393679, 0, 0],
+                children: [
+                    {
+                        name: "pluto",
+                        scale: [1, 1, 1],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                        },
+                    }
+                ]
+            },
         ],
         };
 
