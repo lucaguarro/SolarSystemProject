@@ -439,4 +439,4 @@ function main() {
     }
 }
 
-window.onload = main;
+main();
