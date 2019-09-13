@@ -20,14 +20,14 @@ var trackLeftRight = 0;
 var pushInPullOut = 0;
 var craneUpDown = 0;
 
-var step = 100;
+var step = 1;
 var fovStep = .1;
 
 var fov = degToRad(45);
 var fovMin = 10;
 var fovMax = 160;
 
-var cameraPosition = [0, 4000, -20000];
+var cameraPosition = [10, 0, -20];
 var target = [0, 0, 0];
 var up = [0, 1, 0];
 

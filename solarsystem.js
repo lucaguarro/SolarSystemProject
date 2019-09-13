@@ -125,6 +125,8 @@ function main() {
         return;
     }
 
+   // var texOpts = twgl.TextureFunc(gl, {flipY: true});
+    //const textures = {};
     const textures = twgl.createTextures(gl, {
         sun: {src: "Resources/2k_sun.jpg"},
         mercury: {src: "Resources/2k_mercury.jpg"},
@@ -135,7 +137,7 @@ function main() {
         saturn: {src: "Resources/2k_saturn.jpg"},
         uranus: {src: "Resources/2k_uranus.jpg"},
         neptune: {src: "Resources/2k_neptune.jpg"},
-    }, function (err, textures, sources){
+    }, {flipY: true}, function (err, textures, sources){
         console.log(err);
     });
 
@@ -143,7 +145,7 @@ function main() {
     // normal with a_normal etc..
     twgl.setAttributePrefix("a_");
 
-    var sphereBufferInfo = flattenedPrimitives.createSphereBufferInfo(gl, 10, 12, 6);
+    var sphereBufferInfo = flattenedPrimitives.createSphereBufferInfo(gl, 1, 12, 6);
     // setup GLSL program
     var programInfo = twgl.createProgramInfo(gl, [vs, fs]);
 
@@ -160,7 +162,7 @@ function main() {
         children: [
             {
                 name: "sun",
-                scale: [70, 70, 70],
+                scale: [3, 3, 3],
                 surface: "Resources/2k_sun.jpg",
                 uniforms: {
                     u_colorOffset: [0.6, 0.6, 0, 1], // yellow
@@ -172,7 +174,7 @@ function main() {
                 name: "mercuryOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [3948, 0, 0],
+                translation: [20, 0, 0],
                 children: [
                     {
                         name: "mercury",
@@ -189,11 +191,11 @@ function main() {
                 name: "venusOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [7208, 0, 0],
+                translation: [30, 0, 0],
                 children: [
                     {
                         name: "venus",
-                        scale: [5, 5, 5],
+                        scale: [3, 3, 3],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -206,11 +208,11 @@ function main() {
                 name: "earthOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [9976, 0, 0],
+                translation: [40, 0, 0],
                 children: [
                     {
                         name: "earth",
-                        scale: [5.2, 5.2, 5.2],
+                        scale: [3, 3, 3],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -221,7 +223,7 @@ function main() {
                         name: "moonOrbit",
                         draw: false,
                         nodeType: RTS,
-                        translation: [156, 0, 0],
+                        translation: [5, 0, 0],
                         children: [
                             {
                                 name: "moon",
@@ -229,7 +231,7 @@ function main() {
                                 uniforms: {
                                     u_colorOffset: [0.6, 0.6, 0.6, 1],  // gray
                                     u_colorMult:   [0.1, 0.1, 0.1, 1],
-                                    u_textures: textures.mercury,
+                                    u_texture: textures.mercury,
                                 },
                             },
                         ],
@@ -241,15 +243,15 @@ function main() {
                 name: "marsOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [15125, 0, 0],
+                translation: [50, 0, 0],
                 children: [
                     {
                         name: "mars",
-                        scale: [5, 5, 5],
+                        scale: [3, 3, 3],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_textures: textures.mars,
+                            u_texture: textures.mars,
                         },
                     }
                 ]
@@ -258,15 +260,16 @@ function main() {
                 name: "jupiterOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [51874, 0, 0],
+                translation: [60, 0, 0],
                 children: [
                     {
                         name: "jupiter",
                         scale: [5, 5, 5],
+                        rotation: [0.4, 0, 0],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_textures: textures.jupiter,
+                            u_texture: textures.earth,
                         },
                     }
                 ]
@@ -275,15 +278,15 @@ function main() {
                 name: "saturnOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [95091, 0, 0],
+                translation: [70, 0, 0],
                 children: [
                     {
                         name: "saturn",
-                        scale: [5, 5, 5],
+                        scale: [4, 4, 4],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_textures: textures.saturn,
+                            u_texture: textures.saturn,
                         },
                     }
                 ]
@@ -292,15 +295,15 @@ function main() {
                 name: "uranusOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [191332, 0, 0],
+                translation: [80, 0, 0],
                 children: [
                     {
                         name: "uranus",
-                        scale: [5, 5, 5],
+                        scale: [4, 4, 4],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_textures: textures.uranus,
+                            u_texture: textures.uranus,
                         },
                     }
                 ]
@@ -309,15 +312,15 @@ function main() {
                 name: "neptuneOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [299832, 0, 0],
+                translation: [90, 0, 0],
                 children: [
                     {
                         name: "neptune",
-                        scale: [5, 5, 5],
+                        scale: [4, 4, 4],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_textures: textures.neptune,
+                            u_texture: textures.neptune,
                         },
                     }
                 ]
@@ -326,7 +329,7 @@ function main() {
                 name: "plutoOrbit",
                 draw: false,
                 nodeType: RTS,
-                translation: [393679, 0, 0],
+                translation: [100, 0, 0],
                 children: [
                     {
                         name: "pluto",
@@ -334,7 +337,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_textures: textures.neptune,
+                            u_texture: textures.neptune,
                         },
                     }
                 ]
@@ -398,7 +401,7 @@ function main() {
 
         // Compute the projection matrix
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var projectionMatrix = m4.perspective(fov, aspect, 1, 300000);
+        var projectionMatrix = m4.perspective(fov, aspect, 1, 2000);
 
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
 
