@@ -137,8 +137,6 @@ function main() {
         saturn: {src: "Resources/2k_saturn.jpg"},
         uranus: {src: "Resources/2k_uranus.jpg"},
         neptune: {src: "Resources/2k_neptune.jpg"},
-    }, {flipY: true}, function (err, textures, sources){
-        console.log(err);
     });
 
     // Tell the twgl to match position with a_position, n
