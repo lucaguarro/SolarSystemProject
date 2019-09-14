@@ -45,9 +45,10 @@ TRS.prototype.getMatrix = function(dst){
     var r = this.rotation;
     var s = this.scale;
     m4.translation(t[0], t[1], t[2], dst);
+    m4.zRotate(dst, r[2], dst);
     m4.xRotate(dst, r[0], dst);
     m4.yRotate(dst, r[1], dst);
-    m4.zRotate(dst, r[2], dst);
+
     m4.scale(dst, s[0], s[1], s[2], dst);
     return dst;
 };
@@ -142,8 +143,7 @@ function main() {
     // Tell the twgl to match position with a_position, n
     // normal with a_normal etc..
     twgl.setAttributePrefix("a_");
-
-    var sphereBufferInfo = flattenedPrimitives.createSphereBufferInfo(gl, 1, 12, 6);
+    var sphereBufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 24, 12);
     // setup GLSL program
     var programInfo = twgl.createProgramInfo(gl, [vs, fs]);
 
@@ -211,6 +211,7 @@ function main() {
                     {
                         name: "earth",
                         scale: [3, 3, 3],
+                        rotation: [0, 0, 0.5],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -350,6 +351,7 @@ function main() {
             source: source,
             node: node,
         };
+        source.rotation = nodeDescription.rotation || source.rotation;
         source.translation = nodeDescription.translation || source.translation;
         source.scale = nodeDescription.scale || source.scale;
         if (nodeDescription.draw !== false) {
@@ -415,8 +417,8 @@ function main() {
         m4.yRotate(viewProjectionMatrix, yawAngle, viewProjectionMatrix);
         m4.zRotate(viewProjectionMatrix, rollAngle, viewProjectionMatrix);
         
-        nodeInfosByName["earthOrbit"].source.rotation[1] += 0.001;
-        nodeInfosByName["moonOrbit"].source.rotation[1] += 0.01;
+        // nodeInfosByName["earthOrbit"].source.rotation[1] += 0.001;
+        // nodeInfosByName["moonOrbit"].source.rotation[1] += 0.01;
         nodeInfosByName["earth"].source.rotation[1] += 0.05;
         nodeInfosByName["moon"].source.rotation[1] += -.01;
 

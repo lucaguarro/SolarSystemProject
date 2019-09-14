@@ -27,7 +27,7 @@ var fov = degToRad(45);
 var fovMin = 10;
 var fovMax = 160;
 
-var cameraPosition = [10, 0, -20];
+var cameraPosition = [10, 0, -60];
 var target = [0, 0, 0];
 var up = [0, 1, 0];
 
