@@ -64,9 +64,10 @@ RTS.prototype.getMatrix = function(dst){
     var t = this.translation;
     var r = this.rotation;
     var s = this.scale;
-    m4.xRotation(r[0], dst);
+    m4.zRotation(r[2], dst);
+    m4.xRotate(dst, r[0], dst);
     m4.yRotate(dst, r[1], dst);
-    m4.zRotate(dst, r[2], dst);
+
     m4.translate(dst, t[0], t[1], t[2], dst);
     m4.scale(dst, s[0], s[1], s[2], dst);
     return dst;
@@ -116,6 +117,26 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
         child.updateWorldMatrix(worldMatrix);
     });
 };
+
+var earthOrbitSpeed = 0.01;
+var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001});
+
+function incrementOrbits(nodeInfosByName){
+    nodeInfosByName["earthOrbit"].source.rotation[1] += earthOrbitSpeed;
+
+    //Planets
+    nodeInfosByName["mercuryOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.mercury;
+    nodeInfosByName["venusOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.venus;
+    nodeInfosByName["marsOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.mars;
+    nodeInfosByName["jupiterOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.jupiter;
+    nodeInfosByName["saturnOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.saturn;
+    nodeInfosByName["uranusOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.uranus;
+    nodeInfosByName["neptuneOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.neptune;
+    nodeInfosByName["plutoOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.pluto;
+
+    nodeInfosByName["moonOrbit"].source.rotation[1] += 0.01;
+}
+
 
 function main() {
     // Get A WebGL context
@@ -223,6 +244,7 @@ function main() {
                         draw: false,
                         nodeType: RTS,
                         translation: [5, 0, 0],
+                        rotation: [0, 0, 0.09],
                         children: [
                             {
                                 name: "moon",
@@ -268,7 +290,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_texture: textures.earth,
+                            u_texture: textures.jupiter,
                         },
                     }
                 ]
@@ -417,8 +439,8 @@ function main() {
         m4.yRotate(viewProjectionMatrix, yawAngle, viewProjectionMatrix);
         m4.zRotate(viewProjectionMatrix, rollAngle, viewProjectionMatrix);
         
-        // nodeInfosByName["earthOrbit"].source.rotation[1] += 0.001;
-        // nodeInfosByName["moonOrbit"].source.rotation[1] += 0.01;
+        incrementOrbits(nodeInfosByName);
+
         nodeInfosByName["earth"].source.rotation[1] += 0.05;
         nodeInfosByName["moon"].source.rotation[1] += -.01;
 
