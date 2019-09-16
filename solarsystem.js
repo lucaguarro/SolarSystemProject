@@ -119,7 +119,8 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
 };
 
 var earthOrbitSpeed = 0.01;
-var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001});
+var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001,
+                                        "Moon":12});
 
 function incrementOrbits(nodeInfosByName){
     nodeInfosByName["earthOrbit"].source.rotation[1] += earthOrbitSpeed;
@@ -134,7 +135,8 @@ function incrementOrbits(nodeInfosByName){
     nodeInfosByName["neptuneOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.neptune;
     nodeInfosByName["plutoOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.pluto;
 
-    nodeInfosByName["moonOrbit"].source.rotation[1] += 0.01;
+    //moons
+    nodeInfosByName["moonOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.Moon;
 }
 
 
@@ -223,10 +225,15 @@ function main() {
                     }
                 ]
             },
+            /**
+             * I have a bug where the rotation of the earth is not staying on its axial tilt because "earthOrbit"
+             * is rotating in the y plane and as a result the southern hemisphere never gets direct sunlight
+             */
             {
                 name: "earthOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.059],
                 translation: [40, 0, 0],
                 children: [
                     {
