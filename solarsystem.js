@@ -113,12 +113,13 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
 
     // now process all the children
     var worldMatrix = this.worldMatrix;
+
     this.children.forEach(function(child) {
         child.updateWorldMatrix(worldMatrix);
     });
 };
 
-var earthOrbitSpeed = 0.01;
+var earthOrbitSpeed = 0.001;
 var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001,
                                         "Moon":12});
 
@@ -137,6 +138,15 @@ function incrementOrbits(nodeInfosByName){
 
     //moons
     nodeInfosByName["moonOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.Moon;
+}
+
+const EARTH_AXIAL_TILT = 0.5;
+function incrementRotations(nodeInfosByName){
+    //Earth
+    var theta = nodeInfosByName["earthOrbit"].source.rotation[1];
+    nodeInfosByName["earth"].source.rotation[0] = -EARTH_AXIAL_TILT*Math.sin(theta);
+    nodeInfosByName["earth"].source.rotation[2] = EARTH_AXIAL_TILT*Math.cos(theta);
+    nodeInfosByName["earth"].source.rotation[1] += earthOrbitSpeed*365.25;
 }
 
 
@@ -239,7 +249,7 @@ function main() {
                     {
                         name: "earth",
                         scale: [3, 3, 3],
-                        rotation: [0, 0, 0.5],
+                        rotation: [0.5, 0, 0],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -410,7 +420,6 @@ function main() {
 
     // Compute the camera's matrix using look at.
 
-
     setupControls(canvas);
     // Draw the scene.
     function drawScene(time) {
@@ -447,9 +456,9 @@ function main() {
         m4.zRotate(viewProjectionMatrix, rollAngle, viewProjectionMatrix);
         
         incrementOrbits(nodeInfosByName);
-
-        nodeInfosByName["earth"].source.rotation[1] += 0.05;
-        nodeInfosByName["moon"].source.rotation[1] += -.01;
+        incrementRotations(nodeInfosByName);
+        
+        // nodeInfosByName["moon"].source.rotation[1] += -.01;
 
         // Update all world matrices in the scene graph
         scene.updateWorldMatrix();
