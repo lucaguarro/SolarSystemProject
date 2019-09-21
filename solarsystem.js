@@ -166,11 +166,13 @@ function main() {
         mercury: {src: "Resources/2k_mercury.jpg"},
         venus: {src: "Resources/2k_venus_surface.jpg"},
         earth: {src: "Resources/2k_earth_daymap.jpg"},
+        moon: {src: "Resources/2k_moon.jpg"},
         mars: {src: "Resources/2k_mars.jpg"},
         jupiter: {src: "Resources/2k_jupiter.jpg"},
         saturn: {src: "Resources/2k_saturn.jpg"},
         uranus: {src: "Resources/2k_uranus.jpg"},
         neptune: {src: "Resources/2k_neptune.jpg"},
+        pluto: {src: "Resources/2k_pluto.jpg"}
     });
 
     // Tell the twgl to match position with a_position, n
@@ -205,6 +207,7 @@ function main() {
                 name: "mercuryOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.1107],
                 translation: [20, 0, 0],
                 children: [
                     {
@@ -222,6 +225,7 @@ function main() {
                 name: "venusOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.0382],
                 translation: [30, 0, 0],
                 children: [
                     {
@@ -235,15 +239,11 @@ function main() {
                     }
                 ]
             },
-            /**
-             * I have a bug where the rotation of the earth is not staying on its axial tilt because "earthOrbit"
-             * is rotating in the y plane and as a result the southern hemisphere never gets direct sunlight
-             */
             {
                 name: "earthOrbit",
                 draw: false,
                 nodeType: RTS,
-                rotation: [0, 0, 0.059],
+                rotation: [0, 0, 0.0274], 
                 translation: [40, 0, 0],
                 children: [
                     {
@@ -269,7 +269,7 @@ function main() {
                                 uniforms: {
                                     u_colorOffset: [0.6, 0.6, 0.6, 1],  // gray
                                     u_colorMult:   [0.1, 0.1, 0.1, 1],
-                                    u_texture: textures.mercury,
+                                    u_texture: textures.moon,
                                 },
                             },
                         ],
@@ -281,6 +281,7 @@ function main() {
                 name: "marsOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.0291],
                 translation: [50, 0, 0],
                 children: [
                     {
@@ -298,6 +299,7 @@ function main() {
                 name: "jupiterOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.0056],
                 translation: [60, 0, 0],
                 children: [
                     {
@@ -316,6 +318,7 @@ function main() {
                 name: "saturnOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.0162],
                 translation: [70, 0, 0],
                 children: [
                     {
@@ -333,6 +336,7 @@ function main() {
                 name: "uranusOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.0178],
                 translation: [80, 0, 0],
                 children: [
                     {
@@ -350,6 +354,7 @@ function main() {
                 name: "neptuneOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.0126],
                 translation: [90, 0, 0],
                 children: [
                     {
@@ -367,6 +372,7 @@ function main() {
                 name: "plutoOrbit",
                 draw: false,
                 nodeType: RTS,
+                rotation: [0, 0, 0.2714],
                 translation: [100, 0, 0],
                 children: [
                     {
@@ -375,7 +381,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_texture: textures.neptune,
+                            u_texture: textures.pluto,
                         },
                     }
                 ]
