@@ -140,14 +140,20 @@ function incrementOrbits(nodeInfosByName){
     nodeInfosByName["moonOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.Moon;
 }
 
+var axialTilts = Object.freeze({"mercury":0.0017, "venus": -0.0524,"earth":0.4014, "mars":0.4363, 
+                "jupiter":0.0524, "saturn":0.4712, "uranus":0.1571, "neptune": 0.5236});
+
 const EARTH_AXIAL_TILT = 0.5;
 function incrementRotations(nodeInfosByName){
     //Earth
     var theta = nodeInfosByName["earthOrbit"].source.rotation[1];
-    nodeInfosByName["earth"].source.rotation[0] = -EARTH_AXIAL_TILT*Math.sin(theta);
-    nodeInfosByName["earth"].source.rotation[2] = EARTH_AXIAL_TILT*Math.cos(theta);
+    nodeInfosByName["earth"].source.rotation[0] = -axialTilts.earth*Math.sin(theta);
+    nodeInfosByName["earth"].source.rotation[2] = axialTilts.earth*Math.cos(theta);
     nodeInfosByName["earth"].source.rotation[1] += earthOrbitSpeed*365.25;
+
 }
+
+function rotateAboutXandZ
 
 
 function main() {
@@ -213,6 +219,7 @@ function main() {
                     {
                         name: "mercury",
                         scale: [2, 2, 2],
+                        rotation: [0.0017, 0, 0], //rotational tilt
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -231,6 +238,7 @@ function main() {
                     {
                         name: "venus",
                         scale: [3, 3, 3],
+                        rotation: [-0.0524, 0, 0],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -249,7 +257,7 @@ function main() {
                     {
                         name: "earth",
                         scale: [3, 3, 3],
-                        rotation: [0.5, 0, 0],
+                        rotation: [0.4014, 0, 0],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -287,6 +295,7 @@ function main() {
                     {
                         name: "mars",
                         scale: [3, 3, 3],
+                        rotation: [0.4363, 0, 0],
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -329,7 +338,7 @@ function main() {
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
                             u_texture: textures.saturn,
                         },
-                    }
+                    },
                 ]
             },
             {
