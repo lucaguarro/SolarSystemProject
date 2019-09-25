@@ -173,7 +173,7 @@ function main() {
         mars: {src: "Resources/2k_mars.jpg"},
         jupiter: {src: "Resources/2k_jupiter.jpg"},
         saturn: {src: "Resources/2k_saturn.jpg"},
-        saturn_rings: {src: "Resources/2k_saturn_ring_alpha.png"},
+        saturn_rings: {src: "Resources/saturnringcolor.jpg"},
         uranus: {src: "Resources/2k_uranus.jpg"},
         neptune: {src: "Resources/2k_neptune.jpg"},
         pluto: {src: "Resources/2k_pluto.jpg"}
@@ -188,7 +188,7 @@ function main() {
 
     // create ring geometry for saturn's rings
     // var ringBufferInfo = twgl.primitives.createDiscBufferInfo(gl, radius, divisions, stacksopt, innerRadiusopt, stackPoweropt) 
-    var ringBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 7, 25, 1, 5, 1);
+    var ringBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 7, 25, 2, 5, 2);
 
     // setup GLSL program
     var programInfo = twgl.createProgramInfo(gl, [vs, fs]);
@@ -354,7 +354,7 @@ function main() {
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
-                            u_texture: textures.saturn,
+                            u_texture: textures.saturn_rings,
                         },
                     }
                 ]
