@@ -150,10 +150,7 @@ function incrementRotations(nodeInfosByName){
     nodeInfosByName["earth"].source.rotation[0] = -axialTilts.earth*Math.sin(theta);
     nodeInfosByName["earth"].source.rotation[2] = axialTilts.earth*Math.cos(theta);
     nodeInfosByName["earth"].source.rotation[1] += earthOrbitSpeed*365.25;
-
 }
-
-function rotateAboutXandZ
 
 
 function main() {
@@ -176,6 +173,7 @@ function main() {
         mars: {src: "Resources/2k_mars.jpg"},
         jupiter: {src: "Resources/2k_jupiter.jpg"},
         saturn: {src: "Resources/2k_saturn.jpg"},
+        saturn_rings: {src: "Resources/2k_saturn_ring_alpha.png"},
         uranus: {src: "Resources/2k_uranus.jpg"},
         neptune: {src: "Resources/2k_neptune.jpg"},
         pluto: {src: "Resources/2k_pluto.jpg"}
@@ -184,16 +182,26 @@ function main() {
     // Tell the twgl to match position with a_position, n
     // normal with a_normal etc..
     twgl.setAttributePrefix("a_");
+
+    // create sphere geometry for the sun, planets, and moons
     var sphereBufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 24, 12);
+
+    // create ring geometry for saturn's rings
+    // var ringBufferInfo = twgl.primitives.createDiscBufferInfo(gl, radius, divisions, stacksopt, innerRadiusopt, stackPoweropt) 
+    var ringBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 7, 25, 1, 5, 1);
+
     // setup GLSL program
     var programInfo = twgl.createProgramInfo(gl, [vs, fs]);
-
+    
     var sphereVAO = twgl.createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo);
+    var ringVAO = twgl.createVAOFromBufferInfo(gl, programInfo, ringBufferInfo);
 
     var objectsToDraw = [];
     var objects = [];
     var nodeInfosByName = {};
     //var textures = {}
+
+    var SHAPES = Object.freeze({"sphere":1, "ring": 2})
     var solarSystemNode =
         {
         name: "solar system",
@@ -328,7 +336,7 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0162],
-                translation: [70, 0, 0],
+                translation: [75, 0, 0],
                 children: [
                     {
                         name: "saturn",
@@ -339,6 +347,16 @@ function main() {
                             u_texture: textures.saturn,
                         },
                     },
+                    {
+                        name: "saturnRings",
+                        shapeType: SHAPES.ring,
+                        rotation: [-0.5, 0, 0],
+                        uniforms: {
+                            u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
+                            u_colorMult:   [0.8, 0.5, 0.2, 1],
+                            u_texture: textures.saturn,
+                        },
+                    }
                 ]
             },
             {
@@ -346,7 +364,7 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0178],
-                translation: [80, 0, 0],
+                translation: [90, 0, 0],
                 children: [
                     {
                         name: "uranus",
@@ -364,7 +382,7 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0126],
-                translation: [90, 0, 0],
+                translation: [100, 0, 0],
                 children: [
                     {
                         name: "neptune",
@@ -382,7 +400,7 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.2714],
-                translation: [100, 0, 0],
+                translation: [110, 0, 0],
                 children: [
                     {
                         name: "pluto",
@@ -398,6 +416,24 @@ function main() {
         ],
         };
 
+    function getBufferInfo(shapeType){
+        if(shapeType !== SHAPES.ring){
+            return sphereBufferInfo;
+        }
+        else{
+            return ringBufferInfo;
+        }
+    }
+
+    function getVAO(shapeType){
+        if(shapeType !== SHAPES.ring){
+            return sphereVAO;
+        }
+        else{
+            return ringVAO;
+        }
+    }
+
     function makeNode(nodeDescription) {
         var source = new (nodeDescription.nodeType || TRS);
         var node = new Node(source);
@@ -409,17 +445,17 @@ function main() {
         source.translation = nodeDescription.translation || source.translation;
         source.scale = nodeDescription.scale || source.scale;
         if (nodeDescription.draw !== false) {
-        node.drawInfo = {
-            uniforms: nodeDescription.uniforms,
-            programInfo: programInfo,
-            bufferInfo: sphereBufferInfo,
-            vertexArray: sphereVAO,
-        };
-        objectsToDraw.push(node.drawInfo);
-        objects.push(node);
+            node.drawInfo = {
+                uniforms: nodeDescription.uniforms,
+                programInfo: programInfo,
+                bufferInfo: getBufferInfo(nodeDescription.shapeType),
+                vertexArray: getVAO(nodeDescription.shapeType),
+            };
+            objectsToDraw.push(node.drawInfo);
+            objects.push(node);
         }
         makeNodes(nodeDescription.children).forEach(function(child) {
-        child.setParent(node);
+            child.setParent(node);
         });
         return node;
     }
