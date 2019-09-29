@@ -196,7 +196,8 @@ function main() {
     var sphereVAO = twgl.createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo);
     var ringVAO = twgl.createVAOFromBufferInfo(gl, programInfo, ringBufferInfo);
 
-    var objectsToDraw = [];
+    var objectsToDraw_BCull = [];
+    var objectsToDraw_NoCull = [];
     var objects = [];
     var nodeInfosByName = {};
     //var textures = {}
@@ -451,7 +452,13 @@ function main() {
                 bufferInfo: getBufferInfo(nodeDescription.shapeType),
                 vertexArray: getVAO(nodeDescription.shapeType),
             };
-            objectsToDraw.push(node.drawInfo);
+            if (nodeDescription.shapeType !== SHAPES.ring){
+                objectsToDraw_BCull.push(node.drawInfo);
+            }
+            else{
+                objectsToDraw_NoCull.push(node.drawInfo);
+                
+            }
             objects.push(node);
         }
         makeNodes(nodeDescription.children).forEach(function(child) {
@@ -481,8 +488,8 @@ function main() {
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-        gl.enable(gl.CULL_FACE);
         gl.enable(gl.DEPTH_TEST);
+
 
         // Clear the canvas AND the depth buffer.
         gl.clearColor(0, 0, 0, 1);//TEST what this does
@@ -520,7 +527,12 @@ function main() {
         });
 
         // ------ Draw the objects --------
-        twgl.drawObjectList(gl, objectsToDraw);
+
+        gl.enable(gl.CULL_FACE);
+        twgl.drawObjectList(gl, objectsToDraw_BCull);
+
+        gl.disable(gl.CULL_FACE);
+        twgl.drawObjectList(gl, objectsToDraw_NoCull);
 
         requestAnimationFrame(drawScene);
     }
