@@ -119,7 +119,7 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
     });
 };
 
-var earthOrbitSpeed = 0.001;
+var earthOrbitSpeed = 0.01;
 var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001,
                                         "Moon":12});
 
@@ -152,6 +152,23 @@ function incrementRotations(nodeInfosByName){
     nodeInfosByName["earth"].source.rotation[1] += earthOrbitSpeed*365.25;
 }
 
+
+var FizzyText = function() {
+    this.Follow = 'dat.gui';
+    this.speed = 0.8;
+    this.distance = 10;
+    this.displayOutline = false;
+    // Define render logic ...
+  };
+  
+  window.onload = function() {
+    var text = new FizzyText();
+    var gui = new dat.GUI();
+    gui.add(text, 'Follow', ['none', 'Sun', 'Mercury', 'Venus', 'Earth']);
+    gui.add(text, 'speed', -5, 5);
+    gui.add(text, 'distance', 0, 100);
+  };
+  
 
 function main() {
     // Get A WebGL context
@@ -517,6 +534,8 @@ function main() {
         incrementRotations(nodeInfosByName);
         
         // nodeInfosByName["moon"].source.rotation[1] += -.01;
+
+
 
         // Update all world matrices in the scene graph
         scene.updateWorldMatrix();
