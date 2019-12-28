@@ -1,6 +1,6 @@
 "use strict";
 
-var vs = `#version 300 es
+var vsMain = `#version 300 es
 
 in vec4 a_position;
 in vec2 a_texcoord;
@@ -18,7 +18,7 @@ void main() {
 }
 `;
 
-var fs = `#version 300 es
+var fsMain = `#version 300 es
 precision mediump float;
 
 // Passed in from the vertex shader.
@@ -30,6 +30,33 @@ out vec4 outColor;
 
 void main() {
    outColor = texture(u_texture, v_texcoord);
+}
+`;
+
+var vsSkybox = `#version 300 es
+in vec4 a_position;
+out vec4 v_position;
+void main() {
+  v_position = a_position;
+  gl_Position = a_position;
+}
+`;
+
+
+var fsSkybox = `#version 300 es
+precision mediump float;
+ 
+uniform samplerCube u_skybox;
+uniform mat4 u_viewDirectionProjectionInverse;
+ 
+in vec4 v_position;
+ 
+// we need to declare an output for the fragment shader
+out vec4 outColor;
+ 
+void main() {
+  vec4 t = u_viewDirectionProjectionInverse * v_position;
+  outColor = texture(u_skybox, normalize(t.xyz / t.w));
 }
 `;
 
@@ -179,8 +206,7 @@ function main() {
         return;
     }
 
-   // var texOpts = twgl.TextureFunc(gl, {flipY: true});
-    //const textures = {};
+
     const textures = twgl.createTextures(gl, {
         sun: {src: "Resources/2k_sun.jpg"},
         mercury: {src: "Resources/2k_mercury.jpg"},
@@ -200,35 +226,102 @@ function main() {
     // normal with a_normal etc..
     twgl.setAttributePrefix("a_");
 
-    // create sphere geometry for the sun, planets, and moons
-    var sphereBufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 24, 12);
+    // setup GLSL program
+    var mainProgramInfo = twgl.createProgramInfo(gl, [vsMain, fsMain]);
+    var skyboxProgramInfo = twgl.createProgramInfo(gl, [vsSkybox, fsSkybox]);
 
-    // create ring geometry for saturn's rings
-    // var ringBufferInfo = twgl.primitives.createDiscBufferInfo(gl, radius, divisions, stacksopt, innerRadiusopt, stackPoweropt) 
+    const quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
+        position: [
+          -1, -1, 1,
+           1, -1, 1,
+          -1,  1, 1,
+          -1,  1, 1,
+           1, -1, 1,
+           1,  1, 1,
+        ],
+      });
+    var sphereBufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 24, 12);
     var ringBufferInfo = twgl.primitives.createDiscBufferInfo(gl, 7, 25, 2, 5, 2);
 
-    // setup GLSL program
-    var programInfo = twgl.createProgramInfo(gl, [vs, fs]);
+    var quadVAO = twgl.createVAOFromBufferInfo(gl, skyboxProgramInfo, quadBufferInfo);
+    var sphereVAO = twgl.createVAOFromBufferInfo(gl, mainProgramInfo, sphereBufferInfo);
+    var ringVAO = twgl.createVAOFromBufferInfo(gl, mainProgramInfo, ringBufferInfo);
+
+    const skyMapTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, skyMapTexture);
+
+    const faceInfos = [
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+            url: './Resources/skybox/skybox_px.jpg',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+            url: './Resources/skybox/skybox_nx.jpg',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+            url: './Resources/skybox/skybox_py.jpg',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+            url: './Resources/skybox/skybox_ny.jpg',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+            url: './Resources/skybox/skybox_pz.jpg',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+            url: './Resources/skybox/skybox_nz.jpg',
+        },
+    ];
+    faceInfos.forEach((faceInfo) => {
+        const {target, url} = faceInfo;
     
-    var sphereVAO = twgl.createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo);
-    var ringVAO = twgl.createVAOFromBufferInfo(gl, programInfo, ringBufferInfo);
+        // Upload the canvas to the cubemap face.
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 877;
+        const height = 877;
+        const format = gl.RGBA;
+        const type = gl.UNSIGNED_BYTE;
+    
+        // setup each face so it's immediately renderable
+        gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+    
+        // Asynchronously load an image
+        const image = new Image();
+        image.src = url;
+        image.addEventListener('load', function() {
+        // Now that the image has loaded make copy it to the texture.
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, skyMapTexture);
+            gl.texImage2D(target, level, internalFormat, format, type, image);
+            gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        });
+    });
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
     var objectsToDraw_BCull = [];
     var objectsToDraw_NoCull = [];
     var objects = [];
-    var nodeInfosByName = {};
-    //var textures = {}
+    var nodeInfosByName = {}; // Dictionary
 
     var SHAPES = Object.freeze({"sphere":1, "ring": 2})
+    var CULLS = Object.freeze({"nocull":0, "backcull": 1})
+
     var solarSystemNode =
         {
+        
         name: "solar system",
         draw: false,
         children: [
             {
                 name: "sun",
-                scale: [3, 3, 3],
-                surface: "Resources/2k_sun.jpg",
+                programInfo: mainProgramInfo,
+                scale: [5, 5, 5],
+                cull: CULLS.backcull,
                 uniforms: {
                     u_colorOffset: [0.6, 0.6, 0, 1], // yellow
                     u_colorMult:   [0.4, 0.4, 0, 1],
@@ -244,8 +337,10 @@ function main() {
                 children: [
                     {
                         name: "mercury",
+                        programInfo: mainProgramInfo,
                         scale: [2, 2, 2],
                         rotation: [0.0017, 0, 0], //rotational tilt
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -263,8 +358,10 @@ function main() {
                 children: [
                     {
                         name: "venus",
+                        programInfo: mainProgramInfo,
                         scale: [3, 3, 3],
                         rotation: [-0.0524, 0, 0],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -282,8 +379,10 @@ function main() {
                 children: [
                     {
                         name: "earth",
+                        programInfo: mainProgramInfo,
                         scale: [3, 3, 3],
                         rotation: [0.4014, 0, 0],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -299,7 +398,9 @@ function main() {
                         children: [
                             {
                                 name: "moon",
+                                programInfo: mainProgramInfo,
                                 scale: [1.4, 1.4, 1.4],
+                                cull: CULLS.backcull,
                                 uniforms: {
                                     u_colorOffset: [0.6, 0.6, 0.6, 1],  // gray
                                     u_colorMult:   [0.1, 0.1, 0.1, 1],
@@ -320,8 +421,10 @@ function main() {
                 children: [
                     {
                         name: "mars",
+                        programInfo: mainProgramInfo,
                         scale: [3, 3, 3],
                         rotation: [0.4363, 0, 0],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -339,8 +442,10 @@ function main() {
                 children: [
                     {
                         name: "jupiter",
+                        programInfo: mainProgramInfo,
                         scale: [5, 5, 5],
                         rotation: [0.4, 0, 0],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -358,7 +463,9 @@ function main() {
                 children: [
                     {
                         name: "saturn",
+                        programInfo: mainProgramInfo,
                         scale: [4, 4, 4],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -367,8 +474,10 @@ function main() {
                     },
                     {
                         name: "saturnRings",
+                        programInfo: mainProgramInfo,
                         shapeType: SHAPES.ring,
                         rotation: [-0.5, 0, 0],
+                        cull: CULLS.nocull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -386,7 +495,9 @@ function main() {
                 children: [
                     {
                         name: "uranus",
+                        programInfo: mainProgramInfo,
                         scale: [4, 4, 4],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -404,7 +515,9 @@ function main() {
                 children: [
                     {
                         name: "neptune",
+                        programInfo: mainProgramInfo,
                         scale: [4, 4, 4],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -422,7 +535,9 @@ function main() {
                 children: [
                     {
                         name: "pluto",
+                        programInfo: mainProgramInfo,
                         scale: [1, 1, 1],
+                        cull: CULLS.backcull,
                         uniforms: {
                             u_colorOffset: [0.2, 0.5, 0.8, 1],  // blue-green
                             u_colorMult:   [0.8, 0.5, 0.2, 1],
@@ -465,16 +580,16 @@ function main() {
         if (nodeDescription.draw !== false) {
             node.drawInfo = {
                 uniforms: nodeDescription.uniforms,
-                programInfo: programInfo,
+                programInfo: nodeDescription.programInfo,
                 bufferInfo: getBufferInfo(nodeDescription.shapeType),
                 vertexArray: getVAO(nodeDescription.shapeType),
             };
-            if (nodeDescription.shapeType !== SHAPES.ring){
+            if (nodeDescription.cull === CULLS.backcull){
                 objectsToDraw_BCull.push(node.drawInfo);
             }
             else{
+                console.log("ay");
                 objectsToDraw_NoCull.push(node.drawInfo);
-                
             }
             objects.push(node);
         }
@@ -496,6 +611,14 @@ function main() {
     // Compute the camera's matrix using look at.
 
     setupControls(canvas);
+    function modifyViewProjection(vpMatrix){
+        m4.translate(vpMatrix, -trackLeftRight, 0, 0, vpMatrix);
+        m4.translate(vpMatrix, 0, -craneUpDown, 0, vpMatrix);
+        m4.translate(vpMatrix, 0, 0, pushInPullOut, vpMatrix);
+        m4.xRotate(vpMatrix, pitchAngle, vpMatrix);
+        m4.yRotate(vpMatrix, yawAngle, vpMatrix);
+        m4.zRotate(vpMatrix, rollAngle, vpMatrix);    
+    }
     // Draw the scene.
     function drawScene(time) {
         time *= 0.0005;
@@ -509,7 +632,7 @@ function main() {
 
 
         // Clear the canvas AND the depth buffer.
-        gl.clearColor(0, 0, 0, 1);//TEST what this does
+        //gl.clearColor(0, 0, 0, 1);//TEST what this does
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Compute the projection matrix
@@ -520,22 +643,23 @@ function main() {
 
         // Make a view matrix from the camera matrix.
         var viewMatrix = m4.inverse(cameraMatrix);
-
         var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
 
-        m4.translate(viewProjectionMatrix, -trackLeftRight, 0, 0, viewProjectionMatrix);
-        m4.translate(viewProjectionMatrix, 0, -craneUpDown, 0, viewProjectionMatrix);
-        m4.translate(viewProjectionMatrix, 0, 0, pushInPullOut, viewProjectionMatrix);
-        m4.xRotate(viewProjectionMatrix, pitchAngle, viewProjectionMatrix);
-        m4.yRotate(viewProjectionMatrix, yawAngle, viewProjectionMatrix);
-        m4.zRotate(viewProjectionMatrix, rollAngle, viewProjectionMatrix);
-        
+        modifyViewProjection(viewProjectionMatrix);
+
         incrementOrbits(nodeInfosByName);
         incrementRotations(nodeInfosByName);
         
         // nodeInfosByName["moon"].source.rotation[1] += -.01;
+        var viewDirectionMatrix = m4.copy(viewMatrix);
+        viewDirectionMatrix[12] = 0;
+        viewDirectionMatrix[13] = 0;
+        viewDirectionMatrix[14] = 0;
 
-
+        var viewDirectionProjectionMatrix = m4.multiply(
+            projectionMatrix, viewDirectionMatrix);
+        modifyViewProjection(viewDirectionProjectionMatrix);
+        var viewDirectionProjectionInverseMatrix = m4.inverse(viewDirectionProjectionMatrix);
 
         // Update all world matrices in the scene graph
         scene.updateWorldMatrix();
@@ -544,15 +668,23 @@ function main() {
         objects.forEach(function(object) {
             object.drawInfo.uniforms.u_matrix = m4.multiply(viewProjectionMatrix, object.worldMatrix);
         });
-
+        var skyboxDrawInfo = {uniforms: {
+                                            u_viewDirectionProjectionInverse: viewDirectionProjectionInverseMatrix,
+                                            u_skybox: skyMapTexture,
+                                        },
+                              programInfo: skyboxProgramInfo,
+                              bufferInfo: quadBufferInfo,
+                              vertexArray: quadVAO,
+        };
         // ------ Draw the objects --------
-
+        gl.depthFunc(gl.LESS);   // added -------------
         gl.enable(gl.CULL_FACE);
         twgl.drawObjectList(gl, objectsToDraw_BCull);
-
         gl.disable(gl.CULL_FACE);
         twgl.drawObjectList(gl, objectsToDraw_NoCull);
-
+        gl.depthFunc(gl.LEQUAL);   // added -------------
+        twgl.drawObjectList(gl, [skyboxDrawInfo]);
+        
         requestAnimationFrame(drawScene);
     }
 }

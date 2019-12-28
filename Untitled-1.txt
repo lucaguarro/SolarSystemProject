@@ -1,0 +1,6 @@
+        gl.useProgram(mainProgramInfo.program);
+        gl.bindVertexArray(sphereVAO);
+        twgl.setUniforms(mainProgramInfo,
+            objects[0].drawInfo.uniforms)
+        twgl.drawBufferInfo(gl, sphereBufferInfo);
+        //
