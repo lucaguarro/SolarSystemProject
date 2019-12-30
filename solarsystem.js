@@ -1,35 +1,86 @@
 "use strict";
 
-var vsMain = `#version 300 es
-
+var vsSun = `#version 300 es
 in vec4 a_position;
 in vec2 a_texcoord;
-
 uniform mat4 u_matrix;
-
 out vec2 v_texcoord;
-
 void main() {
   // Multiply the position by the matrix.
   gl_Position = u_matrix * a_position;
-
   // Pass the texcoord to the fragment shader.
   v_texcoord = a_texcoord;
 }
 `;
 
-var fsMain = `#version 300 es
+var fsSun = `#version 300 es
+precision mediump float;
+// Passed in from the vertex shader.
+in vec2 v_texcoord;
+uniform sampler2D u_texture;
+out vec4 outColor;
+void main() {
+   outColor = texture(u_texture, v_texcoord);
+}
+`;
+
+var vsMain2 = `#version 300 es
+
+in vec4 a_position;
+in vec3 a_normal;
+in vec2 a_texcoord;
+
+uniform vec3 u_sunWorldPosition;
+
+uniform mat4 u_world;
+uniform mat4 u_matrix; //worldViewProjection
+uniform mat4 u_worldViewInverseTranspose;
+
+out vec2 v_texcoord;
+// varying to pass the normal to the fragment shader
+out vec3 v_normal;
+out vec3 v_objectToSun;
+
+void main() {
+  // Multiply the position by the matrix.
+  gl_Position = u_matrix * a_position; 
+
+  // Pass the texcoord to the fragment shader.
+  v_texcoord = a_texcoord;
+
+  // orient the normals and pass to the fragment shader
+  v_normal = mat3(u_worldViewInverseTranspose) * a_normal;
+
+  // compute the world position of the surface
+  vec3 surfaceWorldPosition = (u_world * a_position).xyz;
+ 
+  // compute the vector of the surface to the light
+  // and pass it to the fragment shader
+  v_objectToSun = u_sunWorldPosition - surfaceWorldPosition;
+}
+`;
+
+var fsMain2 = `#version 300 es
 precision mediump float;
 
 // Passed in from the vertex shader.
 in vec2 v_texcoord;
+in vec3 v_normal;
+in vec3 v_objectToSun;
 
 uniform sampler2D u_texture;
 
 out vec4 outColor;
 
 void main() {
+   vec3 normal = normalize(v_normal);
+
+   vec3 objectToSunDirection = normalize(v_objectToSun);
+
+   float light = dot(normal, objectToSunDirection);
    outColor = texture(u_texture, v_texcoord);
+   outColor.rgb *= (light);
+   outColor.rgb += 0.01;
 }
 `;
 
@@ -112,7 +163,7 @@ Node.prototype.setParent = function(parent) {
     if (this.parent) {
         var ndx = this.parent.children.indexOf(this);
         if (ndx >= 0) {
-        this.parent.children.splice(ndx, 1);
+            this.parent.children.splice(ndx, 1);
         }
     }
 
@@ -222,12 +273,14 @@ function main() {
         pluto: {src: "Resources/2k_pluto.jpg"}
     });
 
-    // Tell the twgl to match position with a_position, n
-    // normal with a_normal etc..
+    // Tell the twgl to match position with a_position,
+    // normal with a_normal etc. This is so that the createVAOFromBufferInfo can bind to 
+    // the names of the variables in our shaders.
     twgl.setAttributePrefix("a_");
 
     // setup GLSL program
-    var mainProgramInfo = twgl.createProgramInfo(gl, [vsMain, fsMain]);
+    var sunProgramInfo = twgl.createProgramInfo(gl, [vsSun, fsSun]);
+    var mainProgramInfo = twgl.createProgramInfo(gl, [vsMain2, fsMain2]);
     var skyboxProgramInfo = twgl.createProgramInfo(gl, [vsSkybox, fsSkybox]);
 
     const quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
@@ -250,6 +303,7 @@ function main() {
     const skyMapTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, skyMapTexture);
 
+    // we can use a twgl function for this
     const faceInfos = [
         {
             target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -319,7 +373,7 @@ function main() {
         children: [
             {
                 name: "sun",
-                programInfo: mainProgramInfo,
+                programInfo: sunProgramInfo,
                 scale: [5, 5, 5],
                 cull: CULLS.backcull,
                 uniforms: {
@@ -474,7 +528,7 @@ function main() {
                     },
                     {
                         name: "saturnRings",
-                        programInfo: mainProgramInfo,
+                        programInfo: sunProgramInfo,
                         shapeType: SHAPES.ring,
                         rotation: [-0.5, 0, 0],
                         cull: CULLS.nocull,
@@ -588,7 +642,6 @@ function main() {
                 objectsToDraw_BCull.push(node.drawInfo);
             }
             else{
-                console.log("ay");
                 objectsToDraw_NoCull.push(node.drawInfo);
             }
             objects.push(node);
@@ -609,7 +662,6 @@ function main() {
     requestAnimationFrame(drawScene);
 
     // Compute the camera's matrix using look at.
-
     setupControls(canvas);
     function modifyViewProjection(vpMatrix){
         m4.translate(vpMatrix, -trackLeftRight, 0, 0, vpMatrix);
@@ -630,7 +682,6 @@ function main() {
 
         gl.enable(gl.DEPTH_TEST);
 
-
         // Clear the canvas AND the depth buffer.
         //gl.clearColor(0, 0, 0, 1);//TEST what this does
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -645,29 +696,35 @@ function main() {
         var viewMatrix = m4.inverse(cameraMatrix);
         var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
 
+        // Camera controls by user
         modifyViewProjection(viewProjectionMatrix);
 
         incrementOrbits(nodeInfosByName);
         incrementRotations(nodeInfosByName);
-        
-        // nodeInfosByName["moon"].source.rotation[1] += -.01;
+
+        // Update all world matrices in the scene graph
+        scene.updateWorldMatrix();
+
+
+        // Compute all the matrices for rendering
+        // We update u_matrix for each object so the vertex shader can draw it
+        objects.forEach(function(object) {
+            var MV = m4.multiply(viewProjectionMatrix, object.worldMatrix);
+            object.drawInfo.uniforms.u_world = object.worldMatrix;
+            object.drawInfo.uniforms.u_matrix = MV; //m4.multiply(viewProjectionMatrix, object.worldMatrix); // Sets u_matrix to be in camera space
+            object.drawInfo.uniforms.u_worldViewInverseTranspose = m4.transpose(m4.inverse(object.worldMatrix));
+            object.drawInfo.uniforms.u_sunWorldPosition = [0,0,0];//[objects[0].drawInfo.uniforms[12], objects[0].drawInfo.uniforms[13], objects[0].drawInfo.uniforms[14]]; //gets the position of the sun
+        });
+
         var viewDirectionMatrix = m4.copy(viewMatrix);
         viewDirectionMatrix[12] = 0;
         viewDirectionMatrix[13] = 0;
         viewDirectionMatrix[14] = 0;
 
-        var viewDirectionProjectionMatrix = m4.multiply(
-            projectionMatrix, viewDirectionMatrix);
+        // for the skybox
+        var viewDirectionProjectionMatrix = m4.multiply(projectionMatrix, viewDirectionMatrix);
         modifyViewProjection(viewDirectionProjectionMatrix);
         var viewDirectionProjectionInverseMatrix = m4.inverse(viewDirectionProjectionMatrix);
-
-        // Update all world matrices in the scene graph
-        scene.updateWorldMatrix();
-        // Compute all the matrices for rendering
-        // We update u_matrix for each object so the vertex shader can draw it
-        objects.forEach(function(object) {
-            object.drawInfo.uniforms.u_matrix = m4.multiply(viewProjectionMatrix, object.worldMatrix);
-        });
         var skyboxDrawInfo = {uniforms: {
                                             u_viewDirectionProjectionInverse: viewDirectionProjectionInverseMatrix,
                                             u_skybox: skyMapTexture,
@@ -676,7 +733,8 @@ function main() {
                               bufferInfo: quadBufferInfo,
                               vertexArray: quadVAO,
         };
-        // ------ Draw the objects --------
+        gl.useProgram(mainProgramInfo.program);
+        // ------- Draw the objects --------
         gl.depthFunc(gl.LESS);   // added -------------
         gl.enable(gl.CULL_FACE);
         twgl.drawObjectList(gl, objectsToDraw_BCull);
