@@ -104,6 +104,25 @@ void main() {
 }
 `;
 
+var FizzyText = function() {
+    this.Follow = 'dat.gui';
+    this.speed = 1;
+    this.distance = 1;
+    this.displayOutline = false;
+    // Define render logic ...
+  };
+
+var guiControls = new FizzyText();
+  
+window.onload = function() {
+    //var text = new FizzyText();
+    var gui = new dat.GUI();
+    gui.add(guiControls, 'Follow', ['none', 'Sun', 'Mercury', 'Venus', 'Earth']);
+    gui.add(guiControls, 'speed', 1, 1000);
+    gui.add(guiControls, 'distance', 1, 2);
+};
+  
+
 var TRS = function(){
     this.translation = [0,0,0];
     this.rotation = [0,0,0];
@@ -190,7 +209,8 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
     });
 };
 
-var earthOrbitSpeed = 0.001;
+//slowest = 0.0001, fastest = 0.1
+var earthOrbitSpeed = 0.0001;
 var earthRotationSpeed = earthOrbitSpeed * 365.25;
 var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001,
                                         "Moon":12});
@@ -218,20 +238,15 @@ var axialTilts = Object.freeze({"mercury":0.0017, "venus": -0.0524,"earth":0.401
 
 const EARTH_AXIAL_TILT = 0.5;
 
-function rotationHelper(obj, angleAboutParent, tilt, factor){
-    obj.source.rotation[0] = -tilt*Math.sin(angleAboutParent);
-    obj.source.rotation[2] = tilt*Math.cos(angleAboutParent);
-    obj.source.rotation[1] += earthRotationSpeed*factor;
-}
+//To keep the planet's pole always facing the same direction, we need its position about the sun
+//var theta = nodeInfosByName["earthOrbit"].source.rotation[1];
+//The tilt is distributed between the object's x-axis and z-axis
 function incrementRotations(nodeInfosByName){
-    
-    //Earth
-    //To keep the planet's pole always facing the same direction, we need its position about the sun
-    //var theta = nodeInfosByName["earthOrbit"].source.rotation[1];
-    //The tilt is distributed between the object's x-axis and z-axis
-    // nodeInfosByName["earth"].source.rotation[0] = -axialTilts.earth*Math.sin(theta);
-    // nodeInfosByName["earth"].source.rotation[2] = axialTilts.earth*Math.cos(theta);
-    // nodeInfosByName["earth"].source.rotation[1] += earthRotationSpeed;
+    function rotationHelper(obj, angleAboutParent, tilt, factor){
+        obj.source.rotation[0] = -tilt*Math.sin(angleAboutParent);
+        obj.source.rotation[2] = tilt*Math.cos(angleAboutParent);
+        obj.source.rotation[1] += earthRotationSpeed*factor;
+    }
     rotationHelper(nodeInfosByName["earth"], nodeInfosByName["earthOrbit"].source.rotation[1], axialTilts.earth, 1);
     rotationHelper(nodeInfosByName["mercury"], nodeInfosByName["mercuryOrbit"].source.rotation[1], axialTilts.mercury, earthRotationFactors.mercury);
     rotationHelper(nodeInfosByName["venus"], nodeInfosByName["venusOrbit"].source.rotation[1], axialTilts.venus, earthRotationFactors.venus);
@@ -244,22 +259,7 @@ function incrementRotations(nodeInfosByName){
 }
 
 
-var FizzyText = function() {
-    this.Follow = 'dat.gui';
-    this.speed = 0.8;
-    this.distance = 10;
-    this.displayOutline = false;
-    // Define render logic ...
-  };
-  
-  window.onload = function() {
-    var text = new FizzyText();
-    var gui = new dat.GUI();
-    gui.add(text, 'Follow', ['none', 'Sun', 'Mercury', 'Venus', 'Earth']);
-    gui.add(text, 'speed', -5, 5);
-    gui.add(text, 'distance', 0, 100);
-  };
-  
+
 
 function main() {
     // Get A WebGL context
@@ -716,6 +716,7 @@ function main() {
         // Camera controls by user
         modifyViewProjection(viewProjectionMatrix);
 
+        earthOrbitSpeed = 0.0001*guiControls.speed || 0.0001;
         incrementOrbits(nodeInfosByName);
         incrementRotations(nodeInfosByName);
 
