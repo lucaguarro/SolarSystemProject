@@ -54,16 +54,16 @@ function initKeyboardCallback() {
                 animated = !animated;
                 break;
             case 37: // Use left arrow to move the camera to the left.  
-                trackLeftRight -= step; 
+                trackLeftRight += step; 
                 break;
             case 38: // Use up arrow to move the camera forward. 
-                 pushInPullOut += step;
+                 pushInPullOut -= step;
                  break;
             case 39: // Use right arrow to move the camera to the right. 
-                trackLeftRight += step;
+                trackLeftRight -= step;
                 break; 
             case 40: // Use down arrow to move the camera backward.  
-                pushInPullOut -= step;
+                pushInPullOut += step;
                 break;
             case 85: // Use u or U key to move the camera upward. 
                 craneUpDown += step;

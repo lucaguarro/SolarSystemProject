@@ -62,25 +62,18 @@ void main() {
 
 var fsMain2 = `#version 300 es
 precision mediump float;
-
 // Passed in from the vertex shader.
 in vec2 v_texcoord;
 in vec3 v_normal;
 in vec3 v_objectToSun;
-
 uniform sampler2D u_texture;
-
 out vec4 outColor;
-
 void main() {
    vec3 normal = normalize(v_normal);
-
    vec3 objectToSunDirection = normalize(v_objectToSun);
-
    float light = dot(normal, objectToSunDirection);
    outColor = texture(u_texture, v_texcoord);
-   outColor.rgb *= (light);
-   outColor.rgb += 0.01;
+   outColor.rgb *= (light+0.3);
 }
 `;
 
