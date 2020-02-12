@@ -105,10 +105,10 @@ void main() {
 `;
 
 var TRS = function(){
-            this.translation = [0,0,0];
-            this.rotation = [0,0,0];
-            this.scale = [1,1,1];
-          };
+    this.translation = [0,0,0];
+    this.rotation = [0,0,0];
+    this.scale = [1,1,1];
+};
 
 TRS.prototype.getMatrix = function(dst){
     dst = dst || new Float32Array(16);
@@ -190,14 +190,16 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
     });
 };
 
-var earthOrbitSpeed = 0.01;
+var earthOrbitSpeed = 0.001;
+var earthRotationSpeed = earthOrbitSpeed * 365.25;
 var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001,
                                         "Moon":12});
+var earthRotationFactors = Object.freeze({"mercury":0.0170, "venus":-0.0041, "mars":0.9709, "jupiter":2.4096, "saturn":2.2472, "uranus":-0.28, "neptune": 1.4859, "pluto": 0.1560, "moon": 0.0365});
 
 function incrementOrbits(nodeInfosByName){
     nodeInfosByName["earthOrbit"].source.rotation[1] += earthOrbitSpeed;
 
-    //Planets
+    //Planets - orbit around the sun about the sun's "y-axis"
     nodeInfosByName["mercuryOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.mercury;
     nodeInfosByName["venusOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.venus;
     nodeInfosByName["marsOrbit"].source.rotation[1] += earthOrbitSpeed*earthOrbitsFactor.mars;
@@ -212,15 +214,33 @@ function incrementOrbits(nodeInfosByName){
 }
 
 var axialTilts = Object.freeze({"mercury":0.0017, "venus": -0.0524,"earth":0.4014, "mars":0.4363, 
-                "jupiter":0.0524, "saturn":0.4712, "uranus":0.1571, "neptune": 0.5236});
+                "jupiter":0.0524, "saturn":0.4712, "uranus":0.1571, "neptune": 0.5236, "pluto": 0.303});
 
 const EARTH_AXIAL_TILT = 0.5;
+
+function rotationHelper(obj, angleAboutParent, tilt, factor){
+    obj.source.rotation[0] = -tilt*Math.sin(angleAboutParent);
+    obj.source.rotation[2] = tilt*Math.cos(angleAboutParent);
+    obj.source.rotation[1] += earthRotationSpeed*factor;
+}
 function incrementRotations(nodeInfosByName){
+    
     //Earth
-    var theta = nodeInfosByName["earthOrbit"].source.rotation[1];
-    nodeInfosByName["earth"].source.rotation[0] = -axialTilts.earth*Math.sin(theta);
-    nodeInfosByName["earth"].source.rotation[2] = axialTilts.earth*Math.cos(theta);
-    nodeInfosByName["earth"].source.rotation[1] += earthOrbitSpeed*365.25;
+    //To keep the planet's pole always facing the same direction, we need its position about the sun
+    //var theta = nodeInfosByName["earthOrbit"].source.rotation[1];
+    //The tilt is distributed between the object's x-axis and z-axis
+    // nodeInfosByName["earth"].source.rotation[0] = -axialTilts.earth*Math.sin(theta);
+    // nodeInfosByName["earth"].source.rotation[2] = axialTilts.earth*Math.cos(theta);
+    // nodeInfosByName["earth"].source.rotation[1] += earthRotationSpeed;
+    rotationHelper(nodeInfosByName["earth"], nodeInfosByName["earthOrbit"].source.rotation[1], axialTilts.earth, 1);
+    rotationHelper(nodeInfosByName["mercury"], nodeInfosByName["mercuryOrbit"].source.rotation[1], axialTilts.mercury, earthRotationFactors.mercury);
+    rotationHelper(nodeInfosByName["venus"], nodeInfosByName["venusOrbit"].source.rotation[1], axialTilts.venus, earthRotationFactors.venus);
+    rotationHelper(nodeInfosByName["mars"], nodeInfosByName["marsOrbit"].source.rotation[1], axialTilts.mars, earthRotationFactors.mars);
+    rotationHelper(nodeInfosByName["jupiter"], nodeInfosByName["jupiterOrbit"].source.rotation[1], axialTilts.jupiter, earthRotationFactors.jupiter);
+    rotationHelper(nodeInfosByName["saturn"], nodeInfosByName["saturnOrbit"].source.rotation[1], axialTilts.saturn, earthRotationFactors.saturn);
+    rotationHelper(nodeInfosByName["uranus"], nodeInfosByName["uranusOrbit"].source.rotation[1], axialTilts.uranus, earthRotationFactors.uranus);
+    rotationHelper(nodeInfosByName["neptune"], nodeInfosByName["neptuneOrbit"].source.rotation[1], axialTilts.neptune, earthRotationFactors.neptune);
+    rotationHelper(nodeInfosByName["pluto"], nodeInfosByName["plutoOrbit"].source.rotation[1], axialTilts.pluto, earthRotationFactors.pluto);
 }
 
 
@@ -420,8 +440,8 @@ function main() {
             {
                 name: "earthOrbit",
                 draw: false,
-                nodeType: RTS,
-                rotation: [0, 0, 0.0274], 
+                nodeType: RTS, // Is RTS/TRS to keep the north pole the same? CHECK FIXME
+                rotation: [0, 0, 0.0274], // [x,y,z] where z is into the page. So altering the z, will make the x translation appear higher at the start
                 translation: [40, 0, 0],
                 children: [
                     {
@@ -614,9 +634,13 @@ function main() {
         }
     }
 
+    /**
+     * Given a root node in JSON, it will create all the objects needed for the vertex/fragment shaders. 
+     * It will do this recursively to keep track of the scene graph through makeNodes.
+     */
     function makeNode(nodeDescription) {
-        var source = new (nodeDescription.nodeType || TRS);
-        var node = new Node(source);
+        var source = new (nodeDescription.nodeType || TRS); // If the nodeType is not defined, it will be set to TRS
+        var node = new Node(source); 
         nodeInfosByName[nodeDescription.name] = {
             source: source,
             node: node,
@@ -639,7 +663,7 @@ function main() {
             }
             objects.push(node);
         }
-        makeNodes(nodeDescription.children).forEach(function(child) {
+        makeNodes(nodeDescription.children).forEach(function(child) { 
             child.setParent(node);
         });
         return node;
@@ -647,7 +671,7 @@ function main() {
 
     // If nodeDescriptions exists, create the nodes
     function makeNodes(nodeDescriptions) {
-        return nodeDescriptions ? nodeDescriptions.map(makeNode) : [];
+        return nodeDescriptions ? nodeDescriptions.map(makeNode) : []; //actually goes about making the child
     }
 
     var scene = makeNode(solarSystemNode);
@@ -697,7 +721,6 @@ function main() {
 
         // Update all world matrices in the scene graph
         scene.updateWorldMatrix();
-
 
         // Compute all the matrices for rendering
         // We update u_matrix for each object so the vertex shader can draw it
