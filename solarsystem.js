@@ -108,20 +108,9 @@ var FizzyText = function() {
     this.Follow = 'dat.gui';
     this.speed = 1;
     this.distance = 1;
-    this.displayOutline = false;
+    this.displayOutline = true;
     // Define render logic ...
   };
-
-var guiControls = new FizzyText();
-  
-window.onload = function() {
-    //var text = new FizzyText();
-    var gui = new dat.GUI();
-    gui.add(guiControls, 'Follow', ['none', 'Sun', 'Mercury', 'Venus', 'Earth']);
-    gui.add(guiControls, 'speed', 1, 1000);
-    gui.add(guiControls, 'distance', 1, 2);
-};
-  
 
 var TRS = function(){
     this.translation = [0,0,0];
@@ -211,7 +200,6 @@ Node.prototype.updateWorldMatrix = function(parentWorldMatrix) {
 
 //slowest = 0.0001, fastest = 0.1
 var earthOrbitSpeed = 0.0001;
-var earthRotationSpeed = earthOrbitSpeed * 365.25;
 var earthOrbitsFactor = Object.freeze({"mercury":4.2, "venus":1.6, "mars":0.532, "jupiter":0.084, "saturn":0.034, "uranus":0.012, "neptune": 0.006, "pluto": 0.001,
                                         "Moon":12});
 var earthRotationFactors = Object.freeze({"mercury":0.0170, "venus":-0.0041, "mars":0.9709, "jupiter":2.4096, "saturn":2.2472, "uranus":-0.28, "neptune": 1.4859, "pluto": 0.1560, "moon": 0.0365});
@@ -236,8 +224,6 @@ function incrementOrbits(nodeInfosByName){
 var axialTilts = Object.freeze({"mercury":0.0017, "venus": -0.0524,"earth":0.4014, "mars":0.4363, 
                 "jupiter":0.0524, "saturn":0.4712, "uranus":0.1571, "neptune": 0.5236, "pluto": 0.303});
 
-const EARTH_AXIAL_TILT = 0.5;
-
 //To keep the planet's pole always facing the same direction, we need its position about the sun
 //var theta = nodeInfosByName["earthOrbit"].source.rotation[1];
 //The tilt is distributed between the object's x-axis and z-axis
@@ -245,7 +231,7 @@ function incrementRotations(nodeInfosByName){
     function rotationHelper(obj, angleAboutParent, tilt, factor){
         obj.source.rotation[0] = -tilt*Math.sin(angleAboutParent);
         obj.source.rotation[2] = tilt*Math.cos(angleAboutParent);
-        obj.source.rotation[1] += earthRotationSpeed*factor;
+        obj.source.rotation[1] += earthOrbitSpeed*365.25*factor;
     }
     rotationHelper(nodeInfosByName["earth"], nodeInfosByName["earthOrbit"].source.rotation[1], axialTilts.earth, 1);
     rotationHelper(nodeInfosByName["mercury"], nodeInfosByName["mercuryOrbit"].source.rotation[1], axialTilts.mercury, earthRotationFactors.mercury);
@@ -258,6 +244,12 @@ function incrementRotations(nodeInfosByName){
     rotationHelper(nodeInfosByName["pluto"], nodeInfosByName["plutoOrbit"].source.rotation[1], axialTilts.pluto, earthRotationFactors.pluto);
 }
 
+function updateTranslations(objects, value){
+    for (var i = 0; i < objects.length; i++) {
+        if(objects[i].source.translationFunction != null)
+            objects[i].source.translation[0]=objects[i].source.translationFunction(value);
+    }
+}
 
 
 
@@ -269,7 +261,19 @@ function main() {
     if (!gl) {
         return;
     }
-
+    
+    var guiControls = new FizzyText();
+    var gui = new dat.GUI();
+    var followControl = gui.add(guiControls, 'Follow', ['none', 'Sun', 'Mercury', 'Venus', 'Earth']);
+    var speedControl = gui.add(guiControls, 'speed', 1, 1000);
+    var distanceControl = gui.add(guiControls, 'distance', 0, 10);
+    speedControl.onChange(function(value) {
+        earthOrbitSpeed = 0.0001*guiControls.speed || 0.0001;
+      });
+    distanceControl.onChange(function(value){
+        var celestialObjects = scene.children;
+        updateTranslations(celestialObjects, value);
+      });
 
     const textures = twgl.createTextures(gl, {
         sun: {src: "Resources/2k_sun.jpg"},
@@ -400,7 +404,10 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.1107],
-                translation: [20, 0, 0],
+                translation: [15, 0, 0],
+                translationFunction: function(x) {
+                    return 2.5*x+15;
+                },   
                 children: [
                     {
                         name: "mercury",
@@ -422,6 +429,9 @@ function main() {
                 nodeType: RTS,
                 rotation: [0, 0, 0.0382],
                 translation: [30, 0, 0],
+                translationFunction: function(x) {
+                    return 4.5*x+30;
+                },   
                 children: [
                     {
                         name: "venus",
@@ -442,7 +452,10 @@ function main() {
                 draw: false,
                 nodeType: RTS, // Is RTS/TRS to keep the north pole the same? CHECK FIXME
                 rotation: [0, 0, 0.0274], // [x,y,z] where z is into the page. So altering the z, will make the x translation appear higher at the start
-                translation: [40, 0, 0],
+                translation: [45, 0, 0],
+                translationFunction: function(x) {
+                    return 5.8*x+45;
+                }, 
                 children: [
                     {
                         name: "earth",
@@ -484,7 +497,10 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0291],
-                translation: [50, 0, 0],
+                translation: [60, 0, 0],
+                translationFunction: function(x) {
+                    return 9.8*x+60;
+                }, 
                 children: [
                     {
                         name: "mars",
@@ -505,7 +521,10 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0056],
-                translation: [60, 0, 0],
+                translation: [75, 0, 0],
+                translationFunction: function(x) {
+                    return 46.3*x+75;
+                }, 
                 children: [
                     {
                         name: "jupiter",
@@ -526,7 +545,10 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0162],
-                translation: [75, 0, 0],
+                translation: [90, 0, 0],
+                translationFunction: function(x) {
+                    return 90*x+90;
+                }, 
                 children: [
                     {
                         name: "saturn",
@@ -558,7 +580,10 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0178],
-                translation: [90, 0, 0],
+                translation: [105, 0, 0],
+                translationFunction: function(x) {
+                    return 187.8*x+105;
+                }, 
                 children: [
                     {
                         name: "uranus",
@@ -578,7 +603,10 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.0126],
-                translation: [100, 0, 0],
+                translation: [120, 0, 0],
+                translationFunction: function(x) {
+                    return 298.5*x+120;
+                }, 
                 children: [
                     {
                         name: "neptune",
@@ -598,7 +626,10 @@ function main() {
                 draw: false,
                 nodeType: RTS,
                 rotation: [0, 0, 0.2714],
-                translation: [110, 0, 0],
+                translation: [135, 0, 0],
+                translationFunction: function(x) {
+                    return 394.5*x+135;
+                }, 
                 children: [
                     {
                         name: "pluto",
@@ -648,6 +679,7 @@ function main() {
         source.rotation = nodeDescription.rotation || source.rotation;
         source.translation = nodeDescription.translation || source.translation;
         source.scale = nodeDescription.scale || source.scale;
+        source.translationFunction = nodeDescription.translationFunction || null; // ALERT
         if (nodeDescription.draw !== false) {
             node.drawInfo = {
                 uniforms: nodeDescription.uniforms,
@@ -700,7 +732,7 @@ function main() {
         gl.enable(gl.DEPTH_TEST);
 
         // Clear the canvas AND the depth buffer.
-        //gl.clearColor(0, 0, 0, 1);//TEST what this does
+        // gl.clearColor(0, 0, 0, 1);//TEST what this does
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Compute the projection matrix
@@ -716,7 +748,6 @@ function main() {
         // Camera controls by user
         modifyViewProjection(viewProjectionMatrix);
 
-        earthOrbitSpeed = 0.0001*guiControls.speed || 0.0001;
         incrementOrbits(nodeInfosByName);
         incrementRotations(nodeInfosByName);
 
