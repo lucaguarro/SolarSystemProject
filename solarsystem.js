@@ -732,6 +732,7 @@ function main() {
         m4.translate(vpMatrix, -trackLeftRight, 0, 0, vpMatrix);
         m4.translate(vpMatrix, 0, -craneUpDown, 0, vpMatrix);
         m4.translate(vpMatrix, 0, 0, pushInPullOut, vpMatrix);
+
         m4.xRotate(vpMatrix, pitchAngle, vpMatrix);
         m4.yRotate(vpMatrix, yawAngle, vpMatrix);
         m4.zRotate(vpMatrix, rollAngle, vpMatrix);    
@@ -742,13 +743,16 @@ function main() {
         objects.forEach(function(object) {
             // here, we can try setting the camera depending on the selected object.worldMatrix ALER
             if(object.source.name == followControl.object.Follow.toLowerCase()){
-                //console.log("bang", object.worldMatrix);
                 planetPos = m4.transformPoint(object.worldMatrix, [0,0,0]);
             }
         });
         return planetPos;
     }
-    function adjustCameraToSelectedView(userAngleMatrix, cameraMatrix){
+    function adjustCameraToSelectedView(cameraMatrix){
+        var userAngleMatrix = m4.xRotation(pitchAngle);
+        m4.yRotate(userAngleMatrix, yawAngle, userAngleMatrix);
+        m4.zRotate(userAngleMatrix, rollAngle, userAngleMatrix);
+
         var planetPosition = getSelectedPlanetPosition();
         planetPosition=m4.transformPoint(userAngleMatrix, planetPosition)
         m4.translate(cameraMatrix, -planetPosition[0], planetPosition[1], -planetPosition[2], cameraMatrix);
@@ -775,11 +779,9 @@ function main() {
 
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
 
-        var userAngleMatrix = m4.xRotation(pitchAngle);
-        m4.yRotate(userAngleMatrix, yawAngle, userAngleMatrix);
-        m4.zRotate(userAngleMatrix, rollAngle, userAngleMatrix);
 
-        adjustCameraToSelectedView(userAngleMatrix, cameraMatrix)
+
+        adjustCameraToSelectedView(cameraMatrix)
 
         // Make a view matrix from the camera matrix.
         var viewMatrix = m4.inverse(cameraMatrix);
@@ -798,17 +800,6 @@ function main() {
         // We update u_matrix for each object so the vertex shader can draw it
         objects.forEach(function(object) {
             // here, we can try setting the camera depending on the selected object.worldMatrix ALERT
-
-            if(object.source.name == followControl.object.Follow.toLowerCase()){
-                if(!DEBUGBOOL){
-                    DEBUGBOOL = true;
-                    var planetPosition =  m4.transformPoint(object.worldMatrix, [0,0,0])
-                    console.log("got emmmmmmm ha", planetPosition);
-                }
-                
-                //var planetPosition = vec3.transformMat4(vec3.create(), [0,0,0], planet.transform.position);
-            }
-
             var MV = m4.multiply(viewProjectionMatrix, object.worldMatrix);
             object.drawInfo.uniforms.u_world = object.worldMatrix;
             object.drawInfo.uniforms.u_matrix = MV; //m4.multiply(viewProjectionMatrix, object.worldMatrix); // Sets u_matrix to be in camera space
