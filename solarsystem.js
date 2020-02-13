@@ -103,9 +103,9 @@ void main() {
   outColor = texture(u_skybox, normalize(t.xyz / t.w));
 }
 `;
-
+var DEBUGBOOL = false; // FIXME ALERT
 var FizzyText = function() {
-    this.Follow = 'dat.gui';
+    this.Follow = 'Sun';
     this.speed = 1;
     this.distance = 1;
     this.displayOutline = true;
@@ -251,7 +251,7 @@ function updateTranslations(objects, value){
     }
 }
 
-
+var selected = "sun"; //
 
 function main() {
     // Get A WebGL context
@@ -267,6 +267,20 @@ function main() {
     var followControl = gui.add(guiControls, 'Follow', ['none', 'Sun', 'Mercury', 'Venus', 'Earth']);
     var speedControl = gui.add(guiControls, 'speed', 1, 1000);
     var distanceControl = gui.add(guiControls, 'distance', 0, 10);
+    followControl.onChange(function(value){
+        pitchAngle = 0;
+        yawAngle = 0;
+        rollAngle = 0;
+        trackLeftRight = 0;
+        pushInPullOut = 0;
+        craneUpDown = 0;
+        fov = degToRad(45);
+        cameraPosition = [10, 0, -60];
+        target = [0, 0, 0];
+        up = [0, 1, 0];
+
+        DEBUGBOOL = false;
+    });
     speedControl.onChange(function(value) {
         earthOrbitSpeed = 0.0001*guiControls.speed || 0.0001;
       });
@@ -676,10 +690,12 @@ function main() {
             source: source,
             node: node,
         };
+        source.name = nodeDescription.name; // used for camera changing
         source.rotation = nodeDescription.rotation || source.rotation;
         source.translation = nodeDescription.translation || source.translation;
         source.scale = nodeDescription.scale || source.scale;
-        source.translationFunction = nodeDescription.translationFunction || null; // ALERT
+        source.translationFunction = nodeDescription.translationFunction || null;
+ 
         if (nodeDescription.draw !== false) {
             node.drawInfo = {
                 uniforms: nodeDescription.uniforms,
@@ -720,6 +736,19 @@ function main() {
         m4.yRotate(vpMatrix, yawAngle, vpMatrix);
         m4.zRotate(vpMatrix, rollAngle, vpMatrix);    
     }
+
+    function getSelectedPlanetPosition(){
+        var planetPos;
+        objects.forEach(function(object) {
+            // here, we can try setting the camera depending on the selected object.worldMatrix ALER
+            if(object.source.name == followControl.object.Follow.toLowerCase()){
+                //console.log("bang", object.worldMatrix);
+                planetPos = m4.transformPoint(object.worldMatrix, [0,0,0]);
+            }
+        });
+        return planetPos;
+    }
+
     // Draw the scene.
     function drawScene(time) {
         time *= 0.0005;
@@ -739,7 +768,22 @@ function main() {
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         var projectionMatrix = m4.perspective(fov, aspect, 1, 2000);
 
+        var planetPosition = getSelectedPlanetPosition();
+        //var cameraMatrix = m4.lookAt(cameraPosition, planetPosition, up);
+
+        // m4.xRotate(vpMatrix, pitchAngle, vpMatrix);
+        // m4.yRotate(vpMatrix, yawAngle, vpMatrix);
+        // m4.zRotate(vpMatrix, rollAngle, vpMatrix);    
+        var testMatrix = m4.xRotation(-pitchAngle);
+        m4.yRotate(testMatrix, yawAngle, testMatrix);
+        m4.zRotate(testMatrix, rollAngle, testMatrix);
+        planetPosition=m4.transformPoint(testMatrix, planetPosition)
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
+        // here we should try translating by the selected planet's position?
+
+        //console.log("test", planetPosition)
+        m4.translate(cameraMatrix, -planetPosition[0], -planetPosition[1], -planetPosition[2], cameraMatrix);
+        //m4.multiply(cameraMatrix)
 
         // Make a view matrix from the camera matrix.
         var viewMatrix = m4.inverse(cameraMatrix);
@@ -757,6 +801,18 @@ function main() {
         // Compute all the matrices for rendering
         // We update u_matrix for each object so the vertex shader can draw it
         objects.forEach(function(object) {
+            // here, we can try setting the camera depending on the selected object.worldMatrix ALERT
+
+            if(object.source.name == followControl.object.Follow.toLowerCase()){
+                if(!DEBUGBOOL){
+                    DEBUGBOOL = true;
+                    var planetPosition =  m4.transformPoint(object.worldMatrix, [0,0,0])
+                    console.log("got emmmmmmm ha", planetPosition);
+                }
+                
+                //var planetPosition = vec3.transformMat4(vec3.create(), [0,0,0], planet.transform.position);
+            }
+
             var MV = m4.multiply(viewProjectionMatrix, object.worldMatrix);
             object.drawInfo.uniforms.u_world = object.worldMatrix;
             object.drawInfo.uniforms.u_matrix = MV; //m4.multiply(viewProjectionMatrix, object.worldMatrix); // Sets u_matrix to be in camera space
