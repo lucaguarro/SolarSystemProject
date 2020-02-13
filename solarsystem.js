@@ -264,7 +264,7 @@ function main() {
     
     var guiControls = new FizzyText();
     var gui = new dat.GUI();
-    var followControl = gui.add(guiControls, 'Follow', ['none', 'Sun', 'Mercury', 'Venus', 'Earth']);
+    var followControl = gui.add(guiControls, 'Follow', ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']);
     var speedControl = gui.add(guiControls, 'speed', 1, 1000);
     var distanceControl = gui.add(guiControls, 'distance', 0, 10);
     followControl.onChange(function(value){
@@ -748,7 +748,11 @@ function main() {
         });
         return planetPos;
     }
-
+    function adjustCameraToSelectedView(userAngleMatrix, cameraMatrix){
+        var planetPosition = getSelectedPlanetPosition();
+        planetPosition=m4.transformPoint(userAngleMatrix, planetPosition)
+        m4.translate(cameraMatrix, -planetPosition[0], planetPosition[1], -planetPosition[2], cameraMatrix);
+    }
     // Draw the scene.
     function drawScene(time) {
         time *= 0.0005;
@@ -768,22 +772,14 @@ function main() {
         var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
         var projectionMatrix = m4.perspective(fov, aspect, 1, 2000);
 
-        var planetPosition = getSelectedPlanetPosition();
-        //var cameraMatrix = m4.lookAt(cameraPosition, planetPosition, up);
 
-        // m4.xRotate(vpMatrix, pitchAngle, vpMatrix);
-        // m4.yRotate(vpMatrix, yawAngle, vpMatrix);
-        // m4.zRotate(vpMatrix, rollAngle, vpMatrix);    
-        var testMatrix = m4.xRotation(-pitchAngle);
-        m4.yRotate(testMatrix, yawAngle, testMatrix);
-        m4.zRotate(testMatrix, rollAngle, testMatrix);
-        planetPosition=m4.transformPoint(testMatrix, planetPosition)
         var cameraMatrix = m4.lookAt(cameraPosition, target, up);
-        // here we should try translating by the selected planet's position?
 
-        //console.log("test", planetPosition)
-        m4.translate(cameraMatrix, -planetPosition[0], -planetPosition[1], -planetPosition[2], cameraMatrix);
-        //m4.multiply(cameraMatrix)
+        var userAngleMatrix = m4.xRotation(pitchAngle);
+        m4.yRotate(userAngleMatrix, yawAngle, userAngleMatrix);
+        m4.zRotate(userAngleMatrix, rollAngle, userAngleMatrix);
+
+        adjustCameraToSelectedView(userAngleMatrix, cameraMatrix)
 
         // Make a view matrix from the camera matrix.
         var viewMatrix = m4.inverse(cameraMatrix);
